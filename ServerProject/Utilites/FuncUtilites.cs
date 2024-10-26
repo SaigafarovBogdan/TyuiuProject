@@ -52,5 +52,10 @@ namespace ServerProject.Utilites
 		//	public LoginViewModel LoginData { get; set; }
 		//	public ILocalStorageService LocalStorageService { get; set; }
 		//}
+
+		//var token = await _localStorageService.GetAsync<SecurityToken>(nameof(SecurityToken));
+
+		//if (token == null) return CreateAnonymous();
+		//if (string.IsNullOrWhiteSpace(token.AccessToken)) return CreateAnonymous();
 	}
 }
