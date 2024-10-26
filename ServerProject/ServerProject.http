@@ -1,0 +1,5 @@
+
+@ServerProject_HostAddress = http://localhost:7049
+
+POST {{ServerProject_HostAddress}}/upload/
+Accept: application/json
