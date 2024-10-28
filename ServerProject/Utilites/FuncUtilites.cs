@@ -27,7 +27,8 @@
 				".zip" => "application/zip",
 				".csv" => "text/csv",
 				".json" => "application/json",
-				_ => throw new NotImplementedException(),
+				".dll" => "application/octet-stream",
+				_ => throw new NotImplementedException("Такой тип файла не доступен."),
 			};
 		}
 	}
