@@ -1,6 +1,23 @@
 ﻿@inherits LayoutComponentBase
 
-@Body
+<div id="container">
+    <header>
+        <div id="header">
+            <NavLink class="nav-link" href="my-files">
+                Upload
+            </NavLink>
+            <NavLink class="nav-link" href="download-file">
+                Download
+            </NavLink>
+        </div>
+    </header>
+    <main>
+        <div class="outercontainer">
+            @Body
+        </div>
+    </main>
+</div>
+
 
 <div id="blazor-error-ui">
     An unhandled error has occurred.

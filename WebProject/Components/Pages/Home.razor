@@ -1,55 +1,8 @@
 ﻿@page "/"
-@inject IHttpClientFactory HttpClientFactory
 @rendermode InteractiveServer
-@using BlazorInputFile
-@inject IJSRuntime JS
 
 <PageTitle>Home</PageTitle>
-<script src="downloadFile.js"></script>
-
-<BlazorInputFile.InputFile OnChange="HandleSelection" multiple="true" /><br>
-
-<button @onclick="Download">Скачать файл</button>
 
 @code {
-	const long maxFileSize = 250 * 1024 * 1024;
-	HttpClient client { get; set; }
 
-	protected override void OnInitialized()
-	{
-		client = HttpClientFactory.CreateClient("MainHttpClient");
-	}
-
-	private async Task HandleSelection(IFileListEntry[] files)
-	{
-		foreach (var file in files)
-		{
-			if (file == null)
-				return;
-
-			if (file.Data.Length > maxFileSize)
-				return;
-
-			var ms = new MemoryStream();
-			await file.Data.CopyToAsync(ms);
-
-			var content = new MultipartFormDataContent {
-					{ new ByteArrayContent(ms.ToArray()), "\"upload\"", file.Name }
-			};
-
-			var response = await client.PostAsync("upload", content);
-		}
-	}
-	private async Task Download()
-	{
-		var response = await client.GetAsync("downloadfile");
-		if (response.IsSuccessStatusCode)
-		{
-			var fileName = response?.Content?.Headers?.ContentDisposition?.FileName?.Trim('\"');
-
-			using var streamRef = new DotNetStreamReference(stream: await response.Content.ReadAsStreamAsync());
-
-			await JS.InvokeVoidAsync("downloadFileFromStream", fileName, streamRef);
-		}
-	}
 }

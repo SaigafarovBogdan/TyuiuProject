@@ -1,4 +1,6 @@
+using ServerProject.Services;
 using WebProject.Components;
+using WebProject.Services;
 
 namespace WebProject;
 
@@ -18,8 +20,11 @@ public class Program
             var baseAddress = env.IsDevelopment() ? "https://localhost:7049/" : "https://DropFile.com/";
             client.BaseAddress = new Uri(baseAddress);
         });
+		builder.Services.AddScoped<ILocalStorageService, LocalStorageService>();
+        builder.Services.AddScoped<TokenService>();
+        builder.Services.AddScoped<HttpRequestService>();
 
-        builder.Services.AddServerSideBlazor()
+		builder.Services.AddServerSideBlazor()
             .AddCircuitOptions(options =>
             {
                 options.DetailedErrors = true; // Убрать при открытии сайта

@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using ServerProject.Models;
 using ServerProject.Utilites;
 
 namespace ServerProject.Controllers
@@ -7,23 +8,23 @@ namespace ServerProject.Controllers
 	[Route("[controller]")]
 	public class DownloadFileController : ControllerBase
 	{
-		private readonly IWebHostEnvironment environment;
-
+		private readonly IConfiguration configuration;
 		private readonly ILogger<DownloadFileController> _logger;
 
-		public DownloadFileController(ILogger<DownloadFileController> logger, IWebHostEnvironment _environment)
+		public DownloadFileController(ILogger<DownloadFileController> logger, IConfiguration config)
 		{
 			_logger = logger;
-			environment = _environment;
+			configuration = config;
 		}
 
-		[HttpGet]
+		[HttpGet("{fileId}")]
 		[ProducesResponseType(StatusCodes.Status200OK)]
 		[ProducesResponseType(StatusCodes.Status400BadRequest)]
 		[ProducesResponseType(StatusCodes.Status409Conflict)]
-		public ActionResult DownloadFile()
+		public ActionResult DownloadFile(string fileId, [FromQuery] string tokenId, [FromQuery] string tokenDate)
 		{
-			var path = Directory.GetFiles(Path.Combine(environment.WebRootPath,"uploads")).FirstOrDefault();
+			//Проверка токена
+			var path = Directory.GetFiles(Path.Combine(configuration["UploadPath"], tokenId, fileId)).FirstOrDefault();
 
 			if (path != null)
 			{
@@ -40,7 +41,7 @@ namespace ServerProject.Controllers
 			}
 			else
 			{
-				return BadRequest("Файл не найден");
+				return NotFound("Файл не найден");
 			}
 		}
 	}

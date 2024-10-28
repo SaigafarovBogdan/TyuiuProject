@@ -1,6 +1,4 @@
-﻿using ServerProject.Services;
-
-namespace ServerProject.Utilites
+﻿namespace ServerProject.Utilites
 {
 	public class FuncUtilites
 	{
@@ -32,30 +30,5 @@ namespace ServerProject.Utilites
 				_ => throw new NotImplementedException(),
 			};
 		}
-		//public class LoginModel
-		//{
-		//	public LoginModel(ILocalStorageService localStorageService)
-		//	{
-		//		LoginData = new LoginViewModel();
-		//		LocalStorageService = localStorageService;
-		//	}
-
-		//	public async Task CreateTokenAsync()
-		//	{
-		//		var token = new SecurityToken
-		//		{
-		//			UserName = LoginData.Id,
-		//			AccessToken = LoginData.Password
-		//		};
-		//		await LocalStorageService.SetAsync(nameof(SecurityToken), token);
-		//	}
-		//	public LoginViewModel LoginData { get; set; }
-		//	public ILocalStorageService LocalStorageService { get; set; }
-		//}
-
-		//var token = await _localStorageService.GetAsync<SecurityToken>(nameof(SecurityToken));
-
-		//if (token == null) return CreateAnonymous();
-		//if (string.IsNullOrWhiteSpace(token.AccessToken)) return CreateAnonymous();
 	}
 }

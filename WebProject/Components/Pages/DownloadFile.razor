@@ -1,0 +1,37 @@
+﻿@page "/download-file"
+@rendermode InteractiveServer
+@using WebProject.Utilities
+@inject Services.HttpRequestService httpService
+@inject IJSRuntime JS
+
+<script src="downloadFile.js"></script>
+
+<input type="text" @bind="fileId"><br>
+
+<button @onclick="Download">Скачать файл</button><br>
+@code {
+	UserToken? userToken { get; set; }
+	string fileId { get; set; }
+
+	protected override async Task OnAfterRenderAsync(bool firstRender)
+	{
+		if (firstRender)
+		{
+			userToken = await httpService.GetOrCreateTokenAsync();
+			//проверка на null
+		}
+	}
+	private async Task Download()
+	{
+		//проверка на null
+		var response = await httpService.DownloadFileAsync(fileId, userToken);
+		if (response.IsSuccessStatusCode)
+		{
+			var fileName = response.Content.Headers.ContentDisposition.FileName.Trim('\"');
+
+			using var streamRef = new DotNetStreamReference(stream: await response.Content.ReadAsStreamAsync());
+
+			await JS.InvokeVoidAsync("downloadFileFromStream", fileName, streamRef);
+		}
+	}
+}
