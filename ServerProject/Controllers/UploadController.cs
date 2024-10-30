@@ -50,7 +50,7 @@ namespace ServerProject.Controllers
                     await file.CopyToAsync(stream);
                 }
             }
-            return Ok();
+            return Ok(tokenId + fileId);
         }
     }
 }

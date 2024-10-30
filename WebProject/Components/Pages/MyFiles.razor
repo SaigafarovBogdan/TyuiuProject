@@ -18,12 +18,16 @@
 	<button @onclick="UploadFile">Загрузить</button>
 }
 
+<p>Ваш файл: @FileId</p>
+
 @code {
 	const long maxFileSize = 250 * 1024 * 1024;
 	private bool EnableUpload = false;
 
 	IFileListEntry[]? _files { get; set; }
 	UserToken? userToken { get; set; }
+
+	string FileId { get; set; }
 
 	protected override async Task OnAfterRenderAsync(bool firstRender)
 	{
@@ -53,7 +57,10 @@
 
 		}
 		var response = await httpService.UploadFileAsync(_files, userToken);
-		var content = await response.Content.ReadAsStringAsync();
+		if(response.IsSuccessStatusCode)
+		{
+			FileId = await response.Content.ReadAsStringAsync();
+		}
 		_files = null;
 		EnableUpload = false;
 	}
