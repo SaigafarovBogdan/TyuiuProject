@@ -1,6 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using ServerProject.Utilites;
-using ServerProject.Models;
 
 namespace ServerProject.Controllers
 {

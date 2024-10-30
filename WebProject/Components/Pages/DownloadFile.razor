@@ -25,6 +25,7 @@
 	{
 		//проверка на null
 		var response = await httpService.DownloadFileAsync(fileId, userToken);
+
 		if (response.IsSuccessStatusCode)
 		{
 			var fileName = response.Content.Headers.ContentDisposition.FileName.Trim('\"');
