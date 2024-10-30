@@ -28,6 +28,12 @@ h1:focus {
 .darker-border-checkbox.form-check-input {
     border-color: #929292;
 }
+.nav-link {
+    display: inline-block;
+    margin-right: 15px;
+    text-decoration: none;
+    color: #007bff;
+}
 
 body {
     width: 100%;
@@ -50,3 +56,4 @@ body {
 .outercontainer {
     height:70%;
 }
+

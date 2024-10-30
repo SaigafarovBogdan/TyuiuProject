@@ -1,3 +1,4 @@
+using ServerProject.Services;
 
 namespace ServerProject
 {
@@ -14,7 +15,10 @@ namespace ServerProject
 			builder.Services.AddEndpointsApiExplorer();
 			builder.Services.AddSwaggerGen();
 
-            var app = builder.Build();
+			builder.Services.AddSingleton<FileStorageService>();
+			builder.Services.AddHostedService<FileCleanupService>();
+
+			var app = builder.Build();
 
 			// Configure the HTTP request pipeline.
 			if (app.Environment.IsDevelopment())

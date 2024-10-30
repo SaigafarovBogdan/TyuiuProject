@@ -1,5 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using ServerProject.Utilites;
+using ServerProject.Services;
 
 namespace ServerProject.Controllers
 {
@@ -7,13 +7,13 @@ namespace ServerProject.Controllers
     [Route("[controller]")]
     public class UploadController : ControllerBase
     {
-		private readonly IConfiguration configuration;
 		private readonly ILogger<UploadController> _logger;
+        private readonly FileStorageService fileStorageService;
 
-        public UploadController(ILogger<UploadController> logger, IConfiguration config)
+        public UploadController(ILogger<UploadController> logger, FileStorageService storage)
         {
             _logger = logger;
-            configuration = config;
+            fileStorageService = storage;
         }
 
         [HttpPost]
@@ -26,25 +26,10 @@ namespace ServerProject.Controllers
                 return BadRequest("Нет файла для загрузки.");
             if (DateTime.Parse(tokenDate) < DateTime.UtcNow) return BadRequest("Время токена исстекло.");
 
-			var directoryPath = Path.Combine(configuration["UploadPath"], tokenId);
-			if (!Directory.Exists(directoryPath))
-			{
-				Directory.CreateDirectory(directoryPath);
-			}
-
-            string filePath;
-            string fileId;
-			do
-            {
-				fileId = FuncUtilites.GenerateId();
-				filePath = Path.Combine(configuration["UploadPath"], tokenId, tokenId+fileId);
-			}
-            while(Directory.Exists(filePath));
-			Directory.CreateDirectory(filePath);
-
+            var (resultPath, fileId) = fileStorageService.AddFileDTO(tokenId);
 			foreach (var file in files)
             {
-				var path = Path.Combine(filePath, file.FileName);
+				var path = Path.Combine(resultPath, file.FileName);
                 using (var stream = new FileStream(path, FileMode.Create))
                 {
                     await file.CopyToAsync(stream);
