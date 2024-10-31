@@ -3,9 +3,8 @@
 	public class FileDTO
 	{
 		public required string Id {  get; set; }
-
+		public required string FileName { get; set; }
 		public DateTime DateUpload { get; set; }
-
 		public required string FilePath { get; set; }
 	}
 }
