@@ -12,5 +12,11 @@
 				_ => $"{bytes} Байт"
 			};
 		}
+
+		public static FilesGroupDTO? ConvertFileGroupDTO(ServerFilesGroupDTO group)
+		{
+			if (group == null) return null;
+			return new FilesGroupDTO(group);
+		}
 	}
 }

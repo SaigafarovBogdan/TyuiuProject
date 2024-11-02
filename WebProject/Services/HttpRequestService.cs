@@ -1,4 +1,5 @@
 ﻿using BlazorInputFile;
+using System.Globalization;
 using System.Net.Http.Headers;
 
 namespace WebProject.Services
@@ -42,7 +43,6 @@ namespace WebProject.Services
 
 		public async Task<HttpResponseMessage> UploadFileAsync(IFileListEntry[] files, UserToken token)
 		{
-
 			using (var content = new MultipartFormDataContent())
 			{
 				var tokenIdContent = new StringContent(token.Id);
@@ -72,12 +72,21 @@ namespace WebProject.Services
 						fileName: file.Name
 					);
 				}
-				return await httpClient.PostAsync("upload", content);
+				return await httpClient.PostAsync("upload/uploadfiles", content);
 			}
+		}
+		public async Task<HttpResponseMessage> GetUserFilesAsync(string userId, UserToken token)
+		{
+			var tokenDate = DateTime.ParseExact(token.Date.ToString(), "dd.MM.yyyy HH:mm:ss", CultureInfo.InvariantCulture);
+			var url = $"{httpClient.BaseAddress}upload/getfiles/{userId}?tokenId={token.Id}&tokenDate={tokenDate:yyyy-MM-ddTHH:mm:ss}";
+
+			return await httpClient.GetAsync(url);
 		}
 		public async Task<HttpResponseMessage> DownloadFileAsync(string fileId,UserToken token)
 		{
-			var url = Path.Combine(httpClient.BaseAddress.ToString(), "downloadfile", $"{fileId}?tokenId={token.Id}&tokenDate={token.Date.ToString()}");
+			var tokenDate = DateTime.ParseExact(token.Date.ToString(), "dd.MM.yyyy HH:mm:ss", CultureInfo.InvariantCulture);
+			var url = $"{httpClient.BaseAddress}downloadfile/{fileId}?tokenId={token.Id}&tokenDate={tokenDate:yyyy-MM-ddTHH:mm:ss}";
+
 			return await httpClient.GetAsync(url);
 		}
 	}

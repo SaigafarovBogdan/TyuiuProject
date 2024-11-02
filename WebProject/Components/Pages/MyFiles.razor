@@ -1,18 +1,22 @@
 ﻿@page "/my-files"
 @rendermode InteractiveServer
-@using BlazorInputFile
 @using WebProject.Utilities
 @inject Services.HttpRequestService httpService
 
-
-
+@if (!(_filesUser == null || _filesUser.Count == 0))
+{
+	foreach (var fileGroup in _filesUser)
+	{
+		<FileModel Group=@fileGroup onGroupClicked="@OnGroupClicked" />
+	}
+}
 <BlazorInputFile.InputFile OnChange="HandleSelection" multiple="true" />
 <br>
 
-@if (EnableUpload && _files != null)
+@if (EnableUpload && _filesUpload != null)
 {
 	<ul>
-		@foreach (var file in _files)
+		@foreach (var file in _filesUpload)
 		{
 			<li>Размер @file.Name: @FuncUtilities.GetSizeString(file.Size)</li>
 		}
@@ -22,34 +26,90 @@
 
 <p>Ваш файл: @FileId</p>
 
+@if (isPanelVisible)
+{
+	<div class="overlay" @onclick="ClosePanel">
+		<div class="file-details-panel" @onclick:stopPropagation>
+			<button class="close-button" @onclick="ClosePanel">✖</button>
+			<h4>Список файлов:</h4>
+			<ul>
+				@foreach (var file in _group.Files)
+				{
+					<li>@file.FileName - @FuncUtilities.GetSizeString(file.FileSize)</li>
+				}
+			</ul>
+		</div>
+	</div>
+}
+
+
 @code {
 	const long maxFileSize = 250 * 1024 * 1024;
-	private bool EnableUpload = false;
 
-	IFileListEntry[]? _files { get; set; }
+	[Parameter]
+	[SupplyParameterFromQuery(Name = "Id")]
+	public string? UserId { get; set; }
+
+	private bool EnableUpload = false;
+	private bool isPanelVisible = false;
+
+	IFileListEntry[]? _filesUpload { get; set; }
+	List<FilesGroupDTO>? _filesUser { get; set; }
+
+	FilesGroupDTO _group { get; set; }
+
 	UserToken? userToken { get; set; }
 
-	string FileId { get; set; }
+	string? FileId { get; set; }
 
 	protected override async Task OnAfterRenderAsync(bool firstRender)
 	{
 		if (firstRender)
 		{
 			userToken = await httpService.GetOrCreateTokenAsync();
-			//проверка на null
+			if (userToken == null) throw new NotImplementedException();
+
+			_filesUser = new List<FilesGroupDTO>();
+
+			await UpdateUserFiles();
+		}
+	}
+	private async Task UpdateUserFiles()
+	{
+		var id = string.IsNullOrEmpty(UserId) ? userToken.Id : UserId;
+		var response = await httpService.GetUserFilesAsync(id, userToken);
+		if (response.IsSuccessStatusCode)
+		{
+			List<ServerFilesGroupDTO>? serverGroups = await response.Content.ReadFromJsonAsync<List<ServerFilesGroupDTO>>();
+			if (serverGroups != null)
+			{
+				foreach (var groupDTO in serverGroups)
+				{
+					_filesUser?.Add(FuncUtilities.ConvertFileGroupDTO(groupDTO));
+				}
+				StateHasChanged();
+			}
 		}
 	}
 	private void HandleSelection(IFileListEntry[] files)
 	{
 		EnableUpload = true;
-		_files = files;
+		_filesUpload = files;
+	}
+	private void ClosePanel() => isPanelVisible = false;
+
+	private void OnGroupClicked(FilesGroupDTO group)
+	{
+		_group = group;
+
+		isPanelVisible = true;
 	}
 
 	private async Task UploadFile()
 	{
-		if (_files == null) return;
+		if (_filesUpload == null) return;
 
-		foreach (var file in _files)
+		foreach (var file in _filesUpload)
 		{
 			if (file == null)
 				return;
@@ -58,12 +118,14 @@
 				return;
 
 		}
-		var response = await httpService.UploadFileAsync(_files, userToken);
-		if(response.IsSuccessStatusCode)
+		var response = await httpService.UploadFileAsync(_filesUpload, userToken);
+		if (response.IsSuccessStatusCode)
 		{
 			FileId = await response.Content.ReadAsStringAsync();
+			_filesUser = new List<FilesGroupDTO>();
+			await UpdateUserFiles();
 		}
-		_files = null;
+		_filesUpload = null;
 		EnableUpload = false;
 	}
 }

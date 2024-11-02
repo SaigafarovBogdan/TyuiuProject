@@ -3,9 +3,9 @@ using ServerProject.Models;
 
 namespace ServerProject.Services
 {
-	public class FileCleanupService: BackgroundService
+	public class FileCleanupService : BackgroundService
 	{
-		private readonly Dictionary<string, List<FileDTO>> _files;
+		private readonly Dictionary<string, List<FilesGroupDTO>> _files;
 		private readonly ILogger _logger;
 		private readonly TimeSpan _checkInterval = TimeSpan.FromMinutes(10);
 		private readonly TimeSpan _fileLifeSpan = TimeSpan.FromMinutes(10);
@@ -27,9 +27,11 @@ namespace ServerProject.Services
 
 		private void CleanupExpiredFiles()
 		{
-			var expiredFiles = _files.SelectMany(utd => utd.Value
-				.Where(file => DateTime.UtcNow - file.DateUpload > _fileLifeSpan))
-				.ToList(); // utd - UserTokenDirectory
+			var expiredFiles = _files
+				.SelectMany(utd => utd.Value
+					.Where(group => DateTime.UtcNow - group.DateUpload > _fileLifeSpan)
+				.SelectMany(group => group.Files)
+			).ToList();
 
 			foreach (var file in expiredFiles)
 			{
@@ -45,9 +47,14 @@ namespace ServerProject.Services
 					}
 				}
 			}
-			foreach (var utd in _files.ToList())
+			var expiredFileGroupsIds = _files
+				.Where(utd => utd.Value.Any(group => group.Files.Any(file => DateTime.UtcNow - group.DateUpload > _fileLifeSpan)))
+				.Select(utd => utd.Key)
+				.ToHashSet();
+
+			foreach (var key in expiredFileGroupsIds)
 			{
-				utd.Value.RemoveAll(file => expiredFiles.Contains(file));
+				_files.Remove(key);
 			}
 			_logger.LogDebug("Очистка истёкших файлов произведена. Файлов удалено: {expiredFiles}", expiredFiles.Count);
 		}
