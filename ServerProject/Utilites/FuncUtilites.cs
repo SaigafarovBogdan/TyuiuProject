@@ -1,6 +1,6 @@
 ﻿namespace ServerProject.Utilites
 {
-	public class FuncUtilites
+	public static class FuncUtilites
 	{
 		public static string GenerateId()
 		{

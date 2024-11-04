@@ -1,6 +1,6 @@
 ﻿namespace WebProject.Utilities
 {
-	public class FuncUtilities
+	public static class FuncUtilities
 	{
 		public static string GetSizeString(long? bytes)
 		{

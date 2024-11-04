@@ -21,10 +21,5 @@
 
 	}
 
-	public class FileDTO
-	{
-        public required string FileName { get; set; }
-
-        public required long FileSize {  get; set; }
-    }
+	public record class FileDTO (string FileName, long FileSize);    
 }

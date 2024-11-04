@@ -42,7 +42,7 @@ namespace ServerProject.Controllers
             }
             return Ok(tokenId + filesId);
         }
-		[HttpGet("getfiles/{userId}")]
+		[HttpGet("getfiles/{userId:length(5)}")]
 		[ProducesResponseType(StatusCodes.Status200OK)]
 		[ProducesResponseType(StatusCodes.Status404NotFound)]
 		[ProducesResponseType(StatusCodes.Status400BadRequest)]

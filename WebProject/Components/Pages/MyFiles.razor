@@ -1,7 +1,7 @@
 ﻿@page "/my-files"
 @rendermode InteractiveServer
 @using WebProject.Utilities
-@inject Services.HttpRequestService httpService
+@inject HttpRequestService httpService
 
 @if (!(_filesUser == null || _filesUser.Count == 0))
 {
