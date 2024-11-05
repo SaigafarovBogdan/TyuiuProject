@@ -21,11 +21,10 @@ namespace ServerProject.Controllers
 		[ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
 		[ProducesResponseType(StatusCodes.Status500InternalServerError)]
-		public async Task<IActionResult> Upload([FromForm] IEnumerable<IFormFile> files, [FromForm] string tokenId, [FromForm] DateTime tokenDate)
+		public async Task<IActionResult> Upload([FromForm] IEnumerable<IFormFile> files, [FromForm] string tokenId)
         {
             if (files == null)
                 return BadRequest("Нет файла для загрузки.");
-            if (tokenDate < DateTime.UtcNow) return BadRequest("Время токена исстекло.");
 
             var filesId = fileStorageService.CreateFilesDirectory(tokenId);
 			foreach (var file in files)
@@ -46,12 +45,10 @@ namespace ServerProject.Controllers
 		[ProducesResponseType(StatusCodes.Status200OK)]
 		[ProducesResponseType(StatusCodes.Status404NotFound)]
 		[ProducesResponseType(StatusCodes.Status400BadRequest)]
-		public IActionResult GetUserFiles(string userId, [FromQuery] string tokenId, [FromQuery] DateTime tokenDate)
+		public IActionResult GetUserFiles(string userId, [FromQuery] string tokenId)
 		{
-			if (tokenDate < DateTime.UtcNow) return BadRequest("Время токена исстекло.");
-
-            if (!fileStorageService.Files.ContainsKey(userId)) return NotFound();
-            return Ok(fileStorageService.Files[userId]);
+            if (!fileStorageService.Files.TryGetValue(userId, out List<Models.FilesGroupDTO>? value)) return NotFound();
+            return Ok(value);
 		}
 	}
 }

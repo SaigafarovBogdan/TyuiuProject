@@ -1,13 +1,14 @@
 ﻿using BlazorInputFile;
-using System.Globalization;
+using System.IdentityModel.Tokens.Jwt;
 using System.Net.Http.Headers;
+using System.Security.Claims;
 
 namespace WebProject.Services
 {
 	public class HttpRequestService
 	{
-		IHttpClientFactory httpFactory {  get; set; }
-		HttpClient httpClient {  get; set; }
+		IHttpClientFactory httpFactory { get; set; }
+		HttpClient httpClient { get; set; }
 		TokenService tokenService { get; set; }
 
 		public HttpRequestService(IHttpClientFactory httpFactory, TokenService tokenService)
@@ -20,25 +21,25 @@ namespace WebProject.Services
 		public async Task<UserToken?> GetOrCreateTokenAsync()
 		{
 			var token = await tokenService.GetTokenAsync();
-			if (token == null)
+			if (token != null) return token;
+			try
 			{
-				try
+				var response = await httpClient.GetAsync("Token/gettoken");
+				if (response.IsSuccessStatusCode)
 				{
-					var response = await httpClient.GetAsync("Token/gettoken");
-					if (response.IsSuccessStatusCode)
-					{
-						return await tokenService.CreateTokenAsync(response.Content.ReadAsStringAsync().Result);
-					}
-					return null;
+					var jwtToken = await response.Content.ReadAsStringAsync();
+
+					var idClaim = tokenService.DecodeToken(jwtToken).Claims.FirstOrDefault(c => c.Type == ClaimTypes.Name)?.Value;
+					return new UserToken() { Id = idClaim };
 				}
-				catch (HttpRequestException ex)
-				{
-					Console.WriteLine($"Ошибка при выполнении запроса: {ex.Message}");
-					return null;
-				}
+				return null;
 			}
-			return token;
-			
+			catch (HttpRequestException ex)
+			{
+				Console.WriteLine($"Ошибка при выполнении запроса: {ex.Message}");
+				return null;
+			}
+
 		}
 
 		public async Task<HttpResponseMessage> UploadFileAsync(IFileListEntry[] files, UserToken token)
@@ -46,15 +47,10 @@ namespace WebProject.Services
 			using (var content = new MultipartFormDataContent())
 			{
 				var tokenIdContent = new StringContent(token.Id);
-				var tokenDateContent =  new StringContent(token.Date.ToString());
 
 				content.Add(
 					content: tokenIdContent,
 					name: "tokenId"
-				);
-				content.Add(
-					content: tokenDateContent,
-					name: "tokenDate"
 				);
 
 				foreach (var file in files)
@@ -77,15 +73,13 @@ namespace WebProject.Services
 		}
 		public async Task<HttpResponseMessage> GetUserFilesAsync(string userId, UserToken token)
 		{
-			var tokenDate = DateTime.ParseExact(token.Date.ToString(), "dd.MM.yyyy HH:mm:ss", CultureInfo.InvariantCulture);
-			var url = $"{httpClient.BaseAddress}upload/getfiles/{userId}?tokenId={token.Id}&tokenDate={tokenDate:yyyy-MM-ddTHH:mm:ss}";
+			var url = $"{httpClient.BaseAddress}upload/getfiles/{userId}?tokenId={token.Id}";
 
 			return await httpClient.GetAsync(url);
 		}
-		public async Task<HttpResponseMessage> DownloadFileAsync(string fileId,UserToken token)
+		public async Task<HttpResponseMessage> DownloadFileAsync(string fileId, UserToken token)
 		{
-			var tokenDate = DateTime.ParseExact(token.Date.ToString(), "dd.MM.yyyy HH:mm:ss", CultureInfo.InvariantCulture);
-			var url = $"{httpClient.BaseAddress}downloadfile/{fileId}?tokenId={token.Id}&tokenDate={tokenDate:yyyy-MM-ddTHH:mm:ss}";
+			var url = $"{httpClient.BaseAddress}downloadfile/{fileId}?tokenId={token.Id}";
 
 			return await httpClient.GetAsync(url);
 		}

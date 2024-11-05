@@ -6,19 +6,15 @@ namespace ServerProject.Services
 	public class FileStorageService
 	{
 		private readonly IConfiguration configuration;
-		public Dictionary<string, List<FilesGroupDTO>> Files { get; private set; }
+		public Dictionary<string, List<FilesGroupDTO>> Files { get; private set; } = new Dictionary<string, List<FilesGroupDTO>>();
 		public FileStorageService(IConfiguration config)
 		{
 			configuration = config;
-			if(Files == null)
-			{
-				FilesInitialization();
-			}
+			if(Files.Count == 0) FilesInitialization();
 		}
 
 		private void FilesInitialization()
 		{
-			Files = new Dictionary<string, List<FilesGroupDTO>>();
 			var userDirectories = Directory.GetDirectories(configuration["UploadPath"]);
 
 			foreach (var userDirectory in userDirectories)
@@ -41,12 +37,7 @@ namespace ServerProject.Services
 					foreach (var file in files)
 					{
 						var info = new FileInfo(file);
-						var fileDTO = new FileDTO
-						{
-							FileName = info.Name,
-							FileSize = info.Length,
-							FilePath = file
-						};
+						var fileDTO = new FileDTO(info.Name,info.Length,file);
 
 						filesGroupDTO.Files.Add(fileDTO);
 					}
@@ -90,7 +81,7 @@ namespace ServerProject.Services
 				fileGroup.Id = tokenId + fileId;
 				fileGroup.DateUpload = DateTime.UtcNow;
 			}
-			fileGroup.Files.Add(new FileDTO { FileName = fileName, FileSize = fileSize, FilePath = filePath });
+			fileGroup.Files.Add(new FileDTO(fileName,fileSize,filePath));
 
 			return filePath;
 		}

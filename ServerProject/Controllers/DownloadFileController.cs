@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using ServerProject.Utilites;
+using System.IO.Compression;
 
 namespace ServerProject.Controllers
 {
@@ -20,22 +21,40 @@ namespace ServerProject.Controllers
 		[ProducesResponseType(StatusCodes.Status200OK)]
 		[ProducesResponseType(StatusCodes.Status400BadRequest)]
 		[ProducesResponseType(StatusCodes.Status409Conflict)]
-		public ActionResult DownloadFile(string fileId, [FromQuery] string tokenId, [FromQuery] string tokenDate)
+		public ActionResult DownloadFile(string fileId, [FromQuery] string tokenId)
 		{
-			//Проверка токена
-			var path = Directory.GetFiles(Path.Combine(configuration["UploadPath"], tokenId, fileId)).FirstOrDefault();
+			var paths = Directory.GetFiles(Path.Combine(configuration["UploadPath"], tokenId, fileId));
 
-			if (path != null)
+			if (paths != null)
 			{
-				try
+				if (paths.Length > 1)
 				{
-					byte[] buffer = System.IO.File.ReadAllBytes(path);
-					var memoryStream = new MemoryStream(buffer);
-					return File(memoryStream, FuncUtilites.GetContentType(Path.GetExtension(path)), Path.GetFileName(path));
+					using (var memoryStream = new MemoryStream())
+					{
+						using (var zipArchive = new ZipArchive(memoryStream, ZipArchiveMode.Create, true))
+						{
+							foreach (var filePath in paths)
+							{
+								var fileName = Path.GetFileName(filePath);
+								var zipEntry = zipArchive.CreateEntryFromFile(filePath, fileName);
+							}
+						}
+						memoryStream.Position = 0;
+						return File(memoryStream.ToArray(), "application/zip", $"{fileId}.zip");
+					}
 				}
-				catch(Exception e)
+				else
 				{
-					return Conflict(e.Message);
+					try
+					{
+						byte[] buffer = System.IO.File.ReadAllBytes(paths.First());
+						using (var memoryStream = new MemoryStream(buffer))
+							return File(memoryStream.ToArray(), FuncUtilites.GetContentType(Path.GetExtension(paths.First())), Path.GetFileName(paths.First()));
+					}
+					catch (Exception e)
+					{
+						return Conflict(e.Message);
+					}
 				}
 			}
 			else

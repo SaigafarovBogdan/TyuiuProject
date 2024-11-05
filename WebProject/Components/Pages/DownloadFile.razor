@@ -11,7 +11,7 @@
 <button @onclick="Download">Скачать файл</button><br>
 @code {
 	UserToken? userToken { get; set; }
-	string fileId { get; set; }
+	string fileId { get; set; } = string.Empty;
 
 	protected override async Task OnAfterRenderAsync(bool firstRender)
 	{

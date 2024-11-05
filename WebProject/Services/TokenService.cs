@@ -1,39 +1,37 @@
 ﻿using ServerProject.Services;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
 
 namespace WebProject.Services
 {
 	public class TokenService
 	{
-		public TokenService(ILocalStorageService localStorageService)
+		public TokenService(ILocalStorageService localStorageService, IHttpContextAccessor httpContextAccessor)
 		{
 			LocalStorageService = localStorageService;
+			HttpContext = httpContextAccessor.HttpContext;
 		}
 
 		public async Task<UserToken?> GetTokenAsync()
 		{
-			var token = await LocalStorageService.GetAsync<UserToken>(nameof(UserToken));
-			if (token == null) return null;
-			if (string.IsNullOrWhiteSpace(token.Id) || token.Date < DateTime.UtcNow) return null;
-			return token;
+			if (HttpContext.Request.Cookies.TryGetValue("uft-cookies", out var jwtToken))
+				return new UserToken() { Id = DecodeToken(jwtToken).Claims.FirstOrDefault(c => c.Type == ClaimTypes.Name)?.Value };
+			return null;
+		}
+		public JwtSecurityToken DecodeToken(string token)
+		{
+			var handler = new JwtSecurityTokenHandler();
+
+			var resultJwtToken = handler.ReadJwtToken(token);
+			return resultJwtToken;
 		}
 
-		public async Task<UserToken> CreateTokenAsync(string id)
-		{
-			var token = new UserToken
-			{
-				Id = id,
-				Date = DateTime.UtcNow.AddDays(1),
-			};
-			await LocalStorageService.SetAsync(nameof(UserToken), token);
-			return token;
-		}
-		public ILocalStorageService LocalStorageService { get; set; }
+		private ILocalStorageService LocalStorageService { get; set; }
+		private HttpContext HttpContext { get; set; }
 	}
 
 	public class UserToken
 	{
 		public string Id { get; set; }
-
-		public DateTime Date { get; set; }
 	}
 }

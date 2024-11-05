@@ -13,16 +13,22 @@ public class Program
         // Add services to the container.
         builder.Services.AddRazorComponents()
             .AddInteractiveServerComponents();
+		builder.Services.AddHttpContextAccessor();
 
-        builder.Services.AddHttpClient("MainHttpClient", (sp, client) =>
+		builder.Services.AddHttpClient("MainHttpClient", (sp, client) =>
         {
             var env = sp.GetRequiredService<IHostEnvironment>();
             var baseAddress = env.IsDevelopment() ? "https://localhost:7049/" : "https://DropFile.com/";
             client.BaseAddress = new Uri(baseAddress);
-        });
+			//client.DefaultRequestHeaders.Accept.Clear();
+			//client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+		});
 		builder.Services.AddScoped<ILocalStorageService, LocalStorageService>();
+
         builder.Services.AddScoped<TokenService>();
         builder.Services.AddScoped<HttpRequestService>();
+        builder.Services.AddAuthentication();
+        builder.Services.AddAuthorization();
 
 		builder.Services.AddServerSideBlazor()
             .AddCircuitOptions(options =>
@@ -40,6 +46,9 @@ public class Program
         }
 
         app.UseHttpsRedirection();
+
+		app.UseAuthentication();
+        app.UseAuthorization();
 
         app.UseStaticFiles();
         app.UseAntiforgery();

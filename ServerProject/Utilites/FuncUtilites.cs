@@ -1,4 +1,6 @@
-﻿namespace ServerProject.Utilites
+﻿using System.IO.Compression;
+
+namespace ServerProject.Utilites
 {
 	public static class FuncUtilites
 	{

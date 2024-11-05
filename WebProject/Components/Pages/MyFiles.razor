@@ -60,7 +60,7 @@
 
 	UserToken? userToken { get; set; }
 
-	string? FileId { get; set; }
+	string FileId { get; set; } = string.Empty;
 
 	protected override async Task OnAfterRenderAsync(bool firstRender)
 	{
@@ -76,7 +76,7 @@
 	}
 	private async Task UpdateUserFiles()
 	{
-		var id = string.IsNullOrEmpty(UserId) ? userToken.Id : UserId;
+		var id = string.IsNullOrEmpty(UserId) ? userToken?.Id : UserId;
 		var response = await httpService.GetUserFilesAsync(id, userToken);
 		if (response.IsSuccessStatusCode)
 		{

@@ -1,3 +1,5 @@
+using Microsoft.AspNetCore.CookiePolicy;
+using ServerProject.Extensions;
 using ServerProject.Services;
 
 namespace ServerProject
@@ -17,7 +19,9 @@ namespace ServerProject
 
 			builder.Services.AddSingleton<FileStorageService>();
 			builder.Services.AddHostedService<FileCleanupService>();
+			builder.Services.AddScoped<IJwtProvider, JwtProvider>();
 
+			builder.Services.AddApiAuthentication(builder.Configuration);
 			var app = builder.Build();
 
 			// Configure the HTTP request pipeline.
@@ -28,9 +32,16 @@ namespace ServerProject
 			}
 
 			app.UseHttpsRedirection();
-			app.UseStaticFiles();
-			app.UseAuthorization();
+			app.UseCookiePolicy(new CookiePolicyOptions
+			{
+				MinimumSameSitePolicy = SameSiteMode.None,
+				HttpOnly = HttpOnlyPolicy.Always,
+				Secure = CookieSecurePolicy.Always,
+			});
 
+			app.UseAuthentication();
+			app.UseAuthorization();
+			app.UseStaticFiles();
 
 			app.MapControllers();
 

@@ -5,23 +5,11 @@
         <strong>Идентификатор:</strong> @Group.Id
     </div>
     <div>
-        <strong>Дата публикации:</strong> @Group.DateUpload.ToString()
+        <strong>Дата публикации:</strong> @TimeZoneInfo.ConvertTimeBySystemTimeZoneId(Group.DateUpload, TimeZoneInfo.Local.Id, "Russian Standard Time").ToString();
     </div>
 </div>
 
 @code {
-    // [Parameter]
-    // public required string FileId { get; set; }
-
-    // [Parameter]
-    // public required string[] FilesNames { get; set; }
-
-    // [Parameter]
-    // public required string[] FilesSizes { get; set; }
-
-    // [Parameter]
-    // public DateTime DateUpload { get; set; }
-
     [Parameter]
     public required FilesGroupDTO Group { get; set; }
 
