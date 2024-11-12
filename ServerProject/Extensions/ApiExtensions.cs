@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 
@@ -8,8 +9,12 @@ namespace ServerProject.Extensions
 	{
 		public static void AddApiAuthentication(this IServiceCollection services, IConfiguration configuration)
 		{
-			services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).
-				AddJwtBearer(JwtBearerDefaults.AuthenticationScheme, options =>
+			services.AddAuthentication(options =>
+			{
+				options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+				options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+			}).
+			AddJwtBearer(JwtBearerDefaults.AuthenticationScheme, options =>
 				{
 					options.TokenValidationParameters = new()
 					{
@@ -23,10 +28,14 @@ namespace ServerProject.Extensions
 					{
 						OnMessageReceived = context =>
 						{
-							context.Token = context.Request.Cookies["uft-cookies"];
+							var authHeader = context.Request.Headers.Authorization.ToString();
+							if (!string.IsNullOrEmpty(authHeader) && authHeader.StartsWith("Bearer "))
+							{
+								context.Token = authHeader.Substring("Bearer ".Length).Trim();
+							}
 							return Task.CompletedTask;
 						}
-					};	
+					};
 				});
 			services.AddAuthorization();
 		}

@@ -26,10 +26,12 @@ namespace ServerProject.Services
 
 				foreach (var fileGroup in fileGroups)
 				{
+					var id = Path.GetFileName(fileGroup);
 					var filesGroupDTO = new FilesGroupDTO
 					{
-						Id = Path.GetFileName(fileGroup),
-						DateUpload = Directory.GetLastWriteTime(fileGroup)
+						Id = id,
+						UserId = id.Substring(0, 5),
+						DateUpload = Directory.GetLastWriteTime(fileGroup).ToUniversalTime(),
 					};
 
 					var files = Directory.GetFiles(fileGroup);
@@ -47,6 +49,17 @@ namespace ServerProject.Services
 
 				Files[userFolderName] = filesGroups;
 			}
+		}
+		public FilesGroupDTO? GetUserFilesGroup(string fileId)
+		{
+			string userId = fileId.Substring(0, 5);
+
+			if (Files.TryGetValue(userId, out var groups))
+			{
+				return groups.FirstOrDefault(group => group.Id == fileId);
+			}
+
+			return null;
 		}
 		public string CreateFilesDirectory(string tokenId)
 		{
@@ -79,6 +92,7 @@ namespace ServerProject.Services
 			if (string.IsNullOrEmpty(fileGroup.Id))
 			{
 				fileGroup.Id = tokenId + fileId;
+				fileGroup.UserId = fileGroup.Id.Substring(0, 5);
 				fileGroup.DateUpload = DateTime.UtcNow;
 			}
 			fileGroup.Files.Add(new FileDTO(fileName,fileSize,filePath));

@@ -1,7 +1,7 @@
 ﻿@page "/download-file"
-@rendermode InteractiveServer
+@rendermode RenderMode.InteractiveWebAssembly
 @using WebProject.Utilities
-@inject Services.HttpRequestService httpService
+@inject HttpRequestService httpService
 @inject IJSRuntime JS
 
 <script src="downloadFile.js"></script>
@@ -23,12 +23,12 @@
 	}
 	private async Task Download()
 	{
-		//проверка на null
-		var response = await httpService.DownloadFileAsync(fileId, userToken);
+		if (string.IsNullOrWhiteSpace(fileId)) return;
+		var response = await httpService.DownloadFileAsync(fileId);
 
 		if (response.IsSuccessStatusCode)
 		{
-			var fileName = response.Content.Headers.ContentDisposition.FileName.Trim('\"');
+			var fileName = response.Content.Headers.ContentDisposition?.FileName.Trim('\"');
 
 			using var streamRef = new DotNetStreamReference(stream: await response.Content.ReadAsStreamAsync());
 

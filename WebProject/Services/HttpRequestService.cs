@@ -1,36 +1,40 @@
 ﻿using BlazorInputFile;
-using System.IdentityModel.Tokens.Jwt;
+using System.Net;
 using System.Net.Http.Headers;
 using System.Security.Claims;
-
 namespace WebProject.Services
 {
 	public class HttpRequestService
 	{
-		IHttpClientFactory httpFactory { get; set; }
-		HttpClient httpClient { get; set; }
-		TokenService tokenService { get; set; }
+		readonly HttpClient _httpClient;
+		readonly IHttpClientFactory _httpClientFactory;
 
-		public HttpRequestService(IHttpClientFactory httpFactory, TokenService tokenService)
+		readonly TokenService _tokenService;
+		public HttpRequestService(IHttpClientFactory httpClientFactory,TokenService tokenService)
 		{
-			this.httpFactory = httpFactory;
-			this.tokenService = tokenService;
-			httpClient = httpFactory.CreateClient("MainHttpClient");
+			_tokenService = tokenService;
+			_httpClientFactory = httpClientFactory;
+			_httpClient = httpClientFactory.CreateClient("MainHttpClient");
 		}
 
 		public async Task<UserToken?> GetOrCreateTokenAsync()
 		{
-			var token = await tokenService.GetTokenAsync();
+			var token = await _tokenService.GetTokenAsync();
 			if (token != null) return token;
 			try
 			{
-				var response = await httpClient.GetAsync("Token/gettoken");
+				var response = await _httpClient.GetAsync("Token/gettoken");
 				if (response.IsSuccessStatusCode)
 				{
 					var jwtToken = await response.Content.ReadAsStringAsync();
+					jwtToken = jwtToken.Replace("\"", "");
+					await _tokenService.SetTokenAsync(jwtToken);
 
-					var idClaim = tokenService.DecodeToken(jwtToken).Claims.FirstOrDefault(c => c.Type == ClaimTypes.Name)?.Value;
-					return new UserToken() { Id = idClaim };
+					var idClaim = _tokenService.DecodeToken(jwtToken).Claims.FirstOrDefault(c => c.Type == ClaimTypes.Name)?.Value;
+					var uToken = new UserToken() { Id = idClaim };
+
+					_tokenService.Token = uToken;
+					return uToken;
 				}
 				return null;
 			}
@@ -42,17 +46,10 @@ namespace WebProject.Services
 
 		}
 
-		public async Task<HttpResponseMessage> UploadFileAsync(IFileListEntry[] files, UserToken token)
+		public async Task<HttpResponseMessage> UploadFileAsync(IFileListEntry[] files)
 		{
 			using (var content = new MultipartFormDataContent())
 			{
-				var tokenIdContent = new StringContent(token.Id);
-
-				content.Add(
-					content: tokenIdContent,
-					name: "tokenId"
-				);
-
 				foreach (var file in files)
 				{
 					var ms = new MemoryStream();
@@ -68,20 +65,38 @@ namespace WebProject.Services
 						fileName: file.Name
 					);
 				}
-				return await httpClient.PostAsync("upload/uploadfiles", content);
+				var request = new HttpRequestMessage(HttpMethod.Post, "upload/uploadfiles")
+				{
+					Content = content
+				};
+
+				request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", $"{_tokenService.JwtToken}");
+				return await _httpClient.SendAsync(request);
 			}
 		}
-		public async Task<HttpResponseMessage> GetUserFilesAsync(string userId, UserToken token)
+		public async Task<HttpResponseMessage> GetUserFilesAsync(string userId)
 		{
-			var url = $"{httpClient.BaseAddress}upload/getfiles/{userId}?tokenId={token.Id}";
+			try
+			{
+                var request = new HttpRequestMessage(HttpMethod.Get, $"upload/getfiles/{userId}");
+                request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", $"{_tokenService.JwtToken}");
 
-			return await httpClient.GetAsync(url);
+                return await _httpClient.SendAsync(request);
+            }
+			catch (HttpRequestException ex)
+			{
+                var errorResponse = new HttpResponseMessage(HttpStatusCode.InternalServerError)
+                {
+                    Content = new StringContent($"Произошла ошибка: {ex.Message}")
+                };
+                return errorResponse;
+            }
 		}
-		public async Task<HttpResponseMessage> DownloadFileAsync(string fileId, UserToken token)
+		public async Task<HttpResponseMessage> DownloadFileAsync(string fileId)
 		{
-			var url = $"{httpClient.BaseAddress}downloadfile/{fileId}?tokenId={token.Id}";
-
-			return await httpClient.GetAsync(url);
+			var request = new HttpRequestMessage(HttpMethod.Get, $"downloadfile/{fileId}");
+			request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", _tokenService.JwtToken);
+			return await _httpClient.SendAsync(request);
 		}
 	}
 }

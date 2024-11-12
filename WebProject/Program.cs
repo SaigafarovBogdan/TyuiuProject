@@ -1,61 +1,36 @@
+using Microsoft.AspNetCore.Components.Web;
+using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using ServerProject.Services;
-using WebProject.Components;
+using System.Net.Http;
+using System.Net.Http.Headers;
 using WebProject.Services;
 
-namespace WebProject;
-
-public class Program
+namespace WebProject
 {
-    public static void Main(string[] args)
-    {
-        var builder = WebApplication.CreateBuilder(args);
+	public class Program
+	{
+		public static async Task Main(string[] args)
+		{
+			var builder = WebAssemblyHostBuilder.CreateDefault(args);
+			builder.RootComponents.Add<App>("#app");
+			builder.RootComponents.Add<HeadOutlet>("head::after");
+			builder.Logging.SetMinimumLevel(LogLevel.Debug);
 
-        // Add services to the container.
-        builder.Services.AddRazorComponents()
-            .AddInteractiveServerComponents();
-		builder.Services.AddHttpContextAccessor();
+			var env = builder.HostEnvironment;
 
-		builder.Services.AddHttpClient("MainHttpClient", (sp, client) =>
-        {
-            var env = sp.GetRequiredService<IHostEnvironment>();
-            var baseAddress = env.IsDevelopment() ? "https://localhost:7049/" : "https://DropFile.com/";
-            client.BaseAddress = new Uri(baseAddress);
-			//client.DefaultRequestHeaders.Accept.Clear();
-			//client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-		});
-		builder.Services.AddScoped<ILocalStorageService, LocalStorageService>();
+			builder.Services.AddTransient<ILocalStorageService, LocalStorageService>();
+			builder.Services.AddTransient<CookieProviderService>();
+			builder.Services.AddSingleton<TokenService>();
 
-        builder.Services.AddScoped<TokenService>();
-        builder.Services.AddScoped<HttpRequestService>();
-        builder.Services.AddAuthentication();
-        builder.Services.AddAuthorization();
+			builder.Services.AddHttpClient("MainHttpClient", (sp,client) =>
+			{
+				var baseAddress = env.IsDevelopment() ? "https://localhost:7049/" : "https://DropFile.com/";
+				client.BaseAddress = new Uri(baseAddress);
+			});
 
-		builder.Services.AddServerSideBlazor()
-            .AddCircuitOptions(options =>
-            {
-                options.DetailedErrors = true; // Убрать при открытии сайта
-            });
-        var app = builder.Build();
+			builder.Services.AddScoped<HttpRequestService>();
 
-        // Configure the HTTP request pipeline.
-        if (!app.Environment.IsDevelopment())
-        {
-            app.UseExceptionHandler("/Error");
-            // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
-            app.UseHsts();
-        }
-
-        app.UseHttpsRedirection();
-
-		app.UseAuthentication();
-        app.UseAuthorization();
-
-        app.UseStaticFiles();
-        app.UseAntiforgery();
-
-        app.MapRazorComponents<App>()
-            .AddInteractiveServerRenderMode();
-
-        app.Run();
-    }
+			await builder.Build().RunAsync();
+		}
+	}
 }

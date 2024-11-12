@@ -13,9 +13,21 @@ namespace ServerProject
 			// Add services to the container.
 
 			builder.Services.AddControllers();
-			// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
+
 			builder.Services.AddEndpointsApiExplorer();
 			builder.Services.AddSwaggerGen();
+			builder.Services.AddCors(options =>
+			{
+				options.AddPolicy("AllowWebOrigin",
+					builder =>
+					{
+						builder.WithOrigins("https://localhost:7101")
+							   .AllowAnyHeader()
+							   .WithExposedHeaders("Content-Disposition")
+							   .AllowAnyMethod()
+							   .AllowCredentials();
+					});
+			});
 
 			builder.Services.AddSingleton<FileStorageService>();
 			builder.Services.AddHostedService<FileCleanupService>();
@@ -23,8 +35,8 @@ namespace ServerProject
 
 			builder.Services.AddApiAuthentication(builder.Configuration);
 			var app = builder.Build();
+			app.UseCors("AllowWebOrigin");
 
-			// Configure the HTTP request pipeline.
 			if (app.Environment.IsDevelopment())
 			{
 				app.UseSwagger();
@@ -32,12 +44,11 @@ namespace ServerProject
 			}
 
 			app.UseHttpsRedirection();
-			app.UseCookiePolicy(new CookiePolicyOptions
-			{
-				MinimumSameSitePolicy = SameSiteMode.None,
-				HttpOnly = HttpOnlyPolicy.Always,
-				Secure = CookieSecurePolicy.Always,
-			});
+			//app.UseCookiePolicy(new CookiePolicyOptions
+			//{
+			//	MinimumSameSitePolicy = SameSiteMode.None,
+			//	Secure = CookieSecurePolicy.Always,
+			//});
 
 			app.UseAuthentication();
 			app.UseAuthorization();

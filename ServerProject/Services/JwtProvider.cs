@@ -1,5 +1,4 @@
-﻿using Microsoft.Extensions.Options;
-using Microsoft.IdentityModel.Tokens;
+﻿using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
@@ -13,6 +12,12 @@ namespace ServerProject.Services
 		public JwtProvider(IConfiguration configuration)
 		{
 			_configuration = configuration;
+		}
+
+		public bool VerifyId(string id, string jwtToken)
+		{
+			var token = DecodeToken(jwtToken);
+			return id == token.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Name)?.Value;
 		}
 
 		public string GenerateToken(string tokenId)
@@ -30,6 +35,13 @@ namespace ServerProject.Services
 				expires: DateTime.UtcNow.AddHours(double.Parse(section.GetSection("ExpiresHours").Value)));
 
 			return new JwtSecurityTokenHandler().WriteToken(token);
+		}
+		public JwtSecurityToken DecodeToken(string token)
+		{
+			var handler = new JwtSecurityTokenHandler();
+
+			var resultJwtToken = handler.ReadJwtToken(token);
+			return resultJwtToken;
 		}
 	}
 }

@@ -5,7 +5,7 @@
         <strong>Идентификатор:</strong> @Group.Id
     </div>
     <div>
-        <strong>Дата публикации:</strong> @TimeZoneInfo.ConvertTimeBySystemTimeZoneId(Group.DateUpload, TimeZoneInfo.Local.Id, "Russian Standard Time").ToString();
+        <strong>Дата публикации:</strong> @Group.DateUpload.ToLocalTime();
     </div>
 </div>
 

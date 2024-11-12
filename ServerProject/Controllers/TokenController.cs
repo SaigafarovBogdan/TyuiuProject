@@ -21,7 +21,13 @@ namespace ServerProject.Controllers
 		public IActionResult GetNewToken()
 		{
 			var token = _jwtProvider.GenerateToken(FuncUtilites.GenerateId());
-			HttpContext.Response.Cookies.Append("uft-cookies", token);
+			//HttpContext.Response.Cookies.Append("uft-cookies", token, new CookieOptions
+			//{
+			//	Expires = DateTimeOffset.UtcNow.AddHours(12),
+			//	Secure = true,
+			//	HttpOnly = true,
+			//	SameSite = SameSiteMode.None
+			//});
 
 			return Ok(token);
 		}

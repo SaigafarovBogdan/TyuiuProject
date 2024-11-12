@@ -1,16 +1,21 @@
 ﻿@page "/my-files"
-@rendermode InteractiveServer
+@rendermode RenderMode.InteractiveWebAssembly
 @using WebProject.Utilities
 @inject HttpRequestService httpService
 
-@if (!(_filesUser == null || _filesUser.Count == 0))
-{
-	foreach (var fileGroup in _filesUser)
+<div class="file-grid">
+	@if (!(_filesUser == null || _filesUser.Count == 0))
 	{
-		<FileModel Group=@fileGroup onGroupClicked="@OnGroupClicked" />
+		@foreach (var fileGroup in _filesUser)
+		{
+			<FileModel Group=@fileGroup onGroupClicked="@OnGroupClicked" />
+		}
 	}
-}
-<BlazorInputFile.InputFile OnChange="HandleSelection" multiple="true" />
+	<div class="upload-card">
+		<BlazorInputFile.InputFile id="input-file" OnChange="HandleSelection" multiple="true" />
+		<label for="input-file"><span>Загрузить файлы</span></label>
+	</div>
+</div>
 <br>
 
 @if (EnableUpload && _filesUpload != null)
@@ -23,8 +28,6 @@
 	</ul>
 	<button @onclick="UploadFile">Загрузить</button>
 }
-
-<p>Ваш файл: @FileId</p>
 
 @if (isPanelVisible)
 {
@@ -60,8 +63,6 @@
 
 	UserToken? userToken { get; set; }
 
-	string FileId { get; set; } = string.Empty;
-
 	protected override async Task OnAfterRenderAsync(bool firstRender)
 	{
 		if (firstRender)
@@ -77,7 +78,7 @@
 	private async Task UpdateUserFiles()
 	{
 		var id = string.IsNullOrEmpty(UserId) ? userToken?.Id : UserId;
-		var response = await httpService.GetUserFilesAsync(id, userToken);
+		var response = await httpService.GetUserFilesAsync(id);
 		if (response.IsSuccessStatusCode)
 		{
 			List<ServerFilesGroupDTO>? serverGroups = await response.Content.ReadFromJsonAsync<List<ServerFilesGroupDTO>>();
@@ -118,10 +119,9 @@
 				return;
 
 		}
-		var response = await httpService.UploadFileAsync(_filesUpload, userToken);
+		var response = await httpService.UploadFileAsync(_filesUpload);
 		if (response.IsSuccessStatusCode)
 		{
-			FileId = await response.Content.ReadAsStringAsync();
 			_filesUser = new List<FilesGroupDTO>();
 			await UpdateUserFiles();
 		}

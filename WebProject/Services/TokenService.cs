@@ -1,22 +1,32 @@
 ﻿using ServerProject.Services;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
-
 namespace WebProject.Services
 {
 	public class TokenService
 	{
-		public TokenService(ILocalStorageService localStorageService, IHttpContextAccessor httpContextAccessor)
+		public TokenService(ILocalStorageService localStorageService,CookieProviderService cookieService)
 		{
-			LocalStorageService = localStorageService;
-			HttpContext = httpContextAccessor.HttpContext;
+			_localStorageService = localStorageService;
+			_cookieProviderService = cookieService;
 		}
 
 		public async Task<UserToken?> GetTokenAsync()
 		{
-			if (HttpContext.Request.Cookies.TryGetValue("uft-cookies", out var jwtToken))
+			//var jwtToken = await _cookieProviderService.GetCookieAsync("uft-cookies");
+			var jwtToken = await _localStorageService.GetStringAsync("uft-cookies");
+			if (jwtToken != null)
+			{
+				JwtToken = jwtToken;
 				return new UserToken() { Id = DecodeToken(jwtToken).Claims.FirstOrDefault(c => c.Type == ClaimTypes.Name)?.Value };
+			}
 			return null;
+		}
+		public async Task SetTokenAsync(string token)
+		{
+			JwtToken = token;
+			await _localStorageService.SetStringAsync("uft-cookies", token);
+			//await _cookieProviderService.SetCookieAsync("uft-cookies", token, 1);
 		}
 		public JwtSecurityToken DecodeToken(string token)
 		{
@@ -26,12 +36,14 @@ namespace WebProject.Services
 			return resultJwtToken;
 		}
 
-		private ILocalStorageService LocalStorageService { get; set; }
-		private HttpContext HttpContext { get; set; }
+		public UserToken Token {  get; set; } = new UserToken();
+		public string JwtToken { get; set; } = string.Empty;
+		readonly CookieProviderService _cookieProviderService;
+		readonly ILocalStorageService _localStorageService;
 	}
 
 	public class UserToken
 	{
-		public string Id { get; set; }
+		public string Id { get; set; } = string.Empty;
 	}
 }

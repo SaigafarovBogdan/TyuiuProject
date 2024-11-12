@@ -28,11 +28,11 @@ h1:focus {
 .darker-border-checkbox.form-check-input {
     border-color: #929292;
 }
+
 .nav-link {
-    display: inline-block;
     margin-right: 15px;
     text-decoration: none;
-    color: #007bff;
+    color: black;
 }
 
 body {
@@ -49,17 +49,107 @@ body {
     width: 100%;
     border: 1px solid #ccc;
 }
+
 #header {
-    height: 30%;
+    display: flex;
+    flex-direction: column;
 }
-.outercontainer {
-    height:70%;
+#logo {
+    width: 320px;
+    height: 70px;
+    flex-grow: 1;
+    padding-left: 60px;
+    margin-bottom: 12px;
+    font-weight: bold;
 }
+#logo-image {
+    max-width: 100%;
+    max-height: 80%;
+    height: auto;
+}
+#menu {
+    border: 1px solid #ccc;
+    background-color: #f5f5f5;
+    font-size: larger;
+}
+    #menu ul {
+        display: inline-block;
+        list-style: none;
+        margin-block-end: 10px;
+        margin-block-start: 10px;
+    }
+        #menu ul li {
+            margin:5px 0px 5px 0px;
+            width: auto;
+            height: auto;
+            display: inline-block;
+        }
+        #menu ul li a {
+            padding: 12px 5px;
+            border-left: 1px solid #ccc;
+            box-shadow: inset 0 0 0 1px rgba(255,255,255,0.5), 3px 3px 6px -3px rgba(0,0,0,0.25);
+            background: -webkit-linear-gradient(90deg, #ccc 0%, #f1f1f1 100%);
+        }
+        #menu ul li:hover {
+            font-weight: bold;
+        }
+
+#footer {
+    border: 1px solid #ccc;
+    text-align: center;
+    font-size: 16px;
+}
+
+.loading-progress {
+    position: relative;
+    display: block;
+    width: 8rem;
+    height: 8rem;
+    margin: 20vh auto 1rem auto;
+}
+
+    .loading-progress circle {
+        fill: none;
+        stroke: #e0e0e0;
+        stroke-width: 0.6rem;
+        transform-origin: 50% 50%;
+        transform: rotate(-90deg);
+    }
+
+        .loading-progress circle:last-child {
+            stroke: #1b6ec2;
+            stroke-dasharray: calc(3.141 * var(--blazor-load-percentage, 0%) * 0.8), 500%;
+            transition: stroke-dasharray 0.05s ease-in-out;
+        }
+
+.loading-progress-text {
+    position: absolute;
+    text-align: center;
+    font-weight: bold;
+    inset: calc(20vh + 3.25rem) 0 auto 0.2rem;
+}
+
+    .loading-progress-text:after {
+        content: var(--blazor-load-percentage-text, "Loading");
+    }
+
+.file-grid {
+    display: grid;
+    text-align:center;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    grid-template-rows: repeat(auto-fill, 200px);
+    gap: 10px;
+    padding: 20px 20px 0px 20px;
+}
+
 .file-panel {
+    display: flex;
+    flex-direction:column;
+    justify-content: center;
+    align-items: center;
     border: 1px solid #007bff;
     border-radius: 5px;
     padding: 10px;
-    margin: 10px;
     cursor: pointer;
     transition: background-color 0.3s;
 }
@@ -68,13 +158,60 @@ body {
         background-color: #e7f1ff;
     }
 
-.file-group {
-    cursor: pointer;
-    padding: 10px;
-    border: 1px solid #007bff;
+.upload-card {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border: 2px dashed #007bff;
     border-radius: 5px;
-    background-color: #f0f8ff;
-    margin: 10px 0;
+    background-color: #f8f9fa;
+    position: relative;
+    overflow: hidden;
+}
+
+    .upload-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background-color: #007bff;
+        transition: left 0.6s ease;
+        z-index: 0;
+    }
+
+    .upload-card label {
+        font-size: 20px;
+        cursor: pointer;
+        font-weight: bold;
+        position: relative;
+        z-index: 1;
+        color: #000;
+        transition: color 0.3s ease;
+    }
+
+    .upload-card:hover::before {
+        left: 0;
+    }
+
+    .upload-card:hover {
+        background-color: transparent;
+        border: 2px solid #007bff;
+    }
+
+        .upload-card:hover label {
+            color: white;
+        }
+
+#input-file {
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    overflow: hidden;
+    position: absolute;
+    cursor: pointer;
+    z-index: 2;
 }
 
 .file-details-panel {
@@ -115,4 +252,3 @@ body {
     .close-button:hover {
         color: #0056b3;
     }
-

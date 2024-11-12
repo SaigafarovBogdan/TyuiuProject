@@ -1,0 +1,38 @@
+﻿@inherits LayoutComponentBase
+
+<div id="container">
+    <header>
+        <div id="header">
+            <div id="logo">
+                <NavLink class="nav-link" href="">
+                    <img id="logo-image" src="logo.png">
+                    <div class="logo-description">Файловый хостинг</div>
+                </NavLink>
+            </div>
+        </div>
+        <div id="menu">
+            <ul class="umenu">
+                <li>
+                    <NavLink class="nav-link" href="my-files">
+                        Загрузить
+                    </NavLink>
+                </li>
+                <li>
+                    <NavLink class="nav-link" href="download-file">
+                        Скачать
+                    </NavLink>
+                </li>
+            </ul>
+        </div>
+    </header>
+    <main>
+        <div class="outercontainer">
+            @Body
+        </div>
+    </main>
+    <footer>
+        <div id="footer">
+            <p>Tyuiu Project 2024</p>
+        </div>
+    </footer>
+</div>

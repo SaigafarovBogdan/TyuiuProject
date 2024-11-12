@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using ServerProject.Utilites;
 using System.IO.Compression;
+using ServerProject.Services;
 
 namespace ServerProject.Controllers
 {
@@ -10,20 +11,30 @@ namespace ServerProject.Controllers
 	{
 		private readonly IConfiguration configuration;
 		private readonly ILogger<DownloadFileController> _logger;
+		private readonly IJwtProvider _jwtProvider;
+		private readonly FileStorageService _fileStorageService;
 
-		public DownloadFileController(ILogger<DownloadFileController> logger, IConfiguration config)
+		public DownloadFileController(ILogger<DownloadFileController> logger, IConfiguration config, IJwtProvider jwtProvider, FileStorageService fileStorage)
 		{
 			_logger = logger;
 			configuration = config;
+			_jwtProvider = jwtProvider;
+			_fileStorageService = fileStorage;
 		}
 
-		[HttpGet("{fileId}")]
+		[HttpGet("{fileId:length(10)}")]
 		[ProducesResponseType(StatusCodes.Status200OK)]
 		[ProducesResponseType(StatusCodes.Status400BadRequest)]
+		[ProducesResponseType(StatusCodes.Status404NotFound)]
 		[ProducesResponseType(StatusCodes.Status409Conflict)]
-		public ActionResult DownloadFile(string fileId, [FromQuery] string tokenId)
+		public ActionResult DownloadFile(string fileId)
 		{
-			var paths = Directory.GetFiles(Path.Combine(configuration["UploadPath"], tokenId, fileId));
+			fileId = fileId.Trim();
+			if (string.IsNullOrWhiteSpace(fileId)) return BadRequest();
+			var FilesGroup = _fileStorageService.GetUserFilesGroup(fileId);
+			if(FilesGroup == null) return NotFound("Файл не найден");
+
+			var paths = Directory.GetFiles(Path.Combine(configuration["UploadPath"], FilesGroup.UserId, fileId));
 
 			if (paths != null)
 			{
@@ -49,7 +60,10 @@ namespace ServerProject.Controllers
 					{
 						byte[] buffer = System.IO.File.ReadAllBytes(paths.First());
 						using (var memoryStream = new MemoryStream(buffer))
-							return File(memoryStream.ToArray(), FuncUtilites.GetContentType(Path.GetExtension(paths.First())), Path.GetFileName(paths.First()));
+						{
+							var fileName = Path.GetFileName(paths.First());
+                            return File(memoryStream.ToArray(), FuncUtilites.GetContentType(Path.GetExtension(paths.First())), fileName);
+						}
 					}
 					catch (Exception e)
 					{
