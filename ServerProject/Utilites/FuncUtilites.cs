@@ -26,11 +26,13 @@ namespace ServerProject.Utilites
 				".jpg" => "image/jpeg",
 				".png" => "image/png",
 				".gif" => "image/gif",
+				".mp3" => "audio/mpeg",
+				".ogg" => "audio/ogg",
+				".mp4" => "video/mp4",
 				".zip" => "application/zip",
 				".csv" => "text/csv",
 				".json" => "application/json",
-				".dll" => "application/octet-stream",
-				_ => throw new NotImplementedException("Такой тип файла не доступен."),
+				_ => "application/octet-stream",
 			};
 		}
 	}

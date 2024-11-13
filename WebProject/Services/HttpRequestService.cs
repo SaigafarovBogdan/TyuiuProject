@@ -52,12 +52,10 @@ namespace WebProject.Services
 			{
 				foreach (var file in files)
 				{
-					var ms = new MemoryStream();
-					await file.Data.CopyToAsync(ms);
-					ms.Position = 0;
+					var fileContent = new StreamContent(file.Data);
 
-					var fileContent = new StreamContent(ms);
-					fileContent.Headers.ContentType = new MediaTypeHeaderValue(file.Type);
+					string type = string.IsNullOrEmpty(file.Type) ? "application/octet-stream" : file.Type;
+					fileContent.Headers.ContentType = new MediaTypeHeaderValue(type);
 
 					content.Add(
 						content: fileContent,
@@ -71,7 +69,7 @@ namespace WebProject.Services
 				};
 
 				request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", $"{_tokenService.JwtToken}");
-				return await _httpClient.SendAsync(request);
+				return await _httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead);
 			}
 		}
 		public async Task<HttpResponseMessage> GetUserFilesAsync(string userId)

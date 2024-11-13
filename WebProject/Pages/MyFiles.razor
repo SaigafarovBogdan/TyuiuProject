@@ -34,11 +34,14 @@
 	<div class="overlay" @onclick="ClosePanel">
 		<div class="file-details-panel" @onclick:stopPropagation>
 			<button class="close-button" @onclick="ClosePanel">✖</button>
-			<h4>Список файлов:</h4>
+			<h2>Список файлов:</h2>
 			<ul>
 				@foreach (var file in _group.Files)
 				{
-					<li>@file.FileName - @FuncUtilities.GetSizeString(file.FileSize)</li>
+					<li>
+						<img src=@($"icons/{FuncUtilities.GetMimeType(file.FileName)}") widht="40" height="30" />
+						@file.FileName - @FuncUtilities.GetSizeString(file.FileSize)
+					</li>
 				}
 			</ul>
 		</div>
@@ -119,13 +122,24 @@
 				return;
 
 		}
-		var response = await httpService.UploadFileAsync(_filesUpload);
-		if (response.IsSuccessStatusCode)
-		{
-			_filesUser = new List<FilesGroupDTO>();
-			await UpdateUserFiles();
-		}
-		_filesUpload = null;
 		EnableUpload = false;
+		try
+		{
+			var response = await httpService.UploadFileAsync(_filesUpload);
+			if (response.IsSuccessStatusCode)
+			{
+				_filesUser = new List<FilesGroupDTO>();
+				await UpdateUserFiles();
+			}
+
+		}
+		catch (Exception ex)
+		{
+			return;
+		}
+		finally
+		{
+			_filesUpload = null;
+		}
 	}
 }
