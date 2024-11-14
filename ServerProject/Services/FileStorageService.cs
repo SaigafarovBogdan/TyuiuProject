@@ -1,5 +1,6 @@
 ﻿using ServerProject.Models;
 using ServerProject.Utilites;
+using System.Reflection.Metadata.Ecma335;
 
 namespace ServerProject.Services
 {
@@ -99,6 +100,7 @@ namespace ServerProject.Services
 
 			return filePath;
 		}
+		public string GetGroupPath(string groupId) => Path.Combine(configuration["UploadPath"], groupId.Substring(0,5), groupId);
 	}
 
 }

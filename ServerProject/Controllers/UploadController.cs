@@ -1,6 +1,8 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using ServerProject.Models;
 using ServerProject.Services;
+using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 
 namespace ServerProject.Controllers
@@ -26,30 +28,43 @@ namespace ServerProject.Controllers
 		[ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
 		[ProducesResponseType(StatusCodes.Status500InternalServerError)]
-		public async Task<IActionResult> Upload([FromForm] IEnumerable<IFormFile> files)
-        {
-            if (files == null)
-                return BadRequest("Нет файла для загрузки.");
+		public async Task<IActionResult> Upload([FromForm] ChunkedFileUploadModel model, [FromForm] string? FileGroupId, [FromForm] long FileSize)
+		{
+			if (model.File == null)
+				return BadRequest("Нет файла для загрузки.");
+			string? tokenId;
+			string filesId;
+			string? resultPath = string.Empty;
 
-            var token = _jwtProvider.DecodeToken(HttpContext.Request.Headers.Authorization.ToString().Substring("Bearer ".Length).Trim());
-            var tokenId = token.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Name)?.Value;
-            if (tokenId == null) return Unauthorized();
+			if (string.IsNullOrEmpty(FileGroupId))
+			{
+				tokenId = _jwtProvider.DecodeToken(HttpContext.Request.Headers.Authorization.ToString().Substring("Bearer ".Length).Trim())
+					.Claims.First(c => c.Type == ClaimTypes.Name).Value;
 
-			var filesId = _fileStorageService.CreateFilesDirectory(tokenId);
-			foreach (var file in files)
-            {
-                var resultPath = _fileStorageService.AddFileDTO(tokenId, filesId, file.FileName, file.Length);
+				filesId = _fileStorageService.CreateFilesDirectory(tokenId);
 
-                if(resultPath == null) return StatusCode(StatusCodes.Status500InternalServerError);
+				resultPath = _fileStorageService.AddFileDTO(tokenId, filesId, model.FileName, FileSize);
+				if (resultPath == null) return StatusCode(StatusCodes.Status500InternalServerError);
+			}
+			else
+			{
+				tokenId = FileGroupId.Substring(0, 5);
+				filesId = FileGroupId;
+			}
+			var filePath = string.IsNullOrEmpty(resultPath) ? Path.Combine(_fileStorageService.GetGroupPath(filesId),model.FileName):Path.Combine(resultPath, model.FileName);
 
-				var path = Path.Combine(resultPath, file.FileName);
-                using (var stream = new FileStream(path, FileMode.Create))
-                {
-                    await file.CopyToAsync(stream);
-                }
-            }
-            return Ok(tokenId + filesId);
-        }
+			using (var stream = new FileStream(filePath, FileMode.Append, FileAccess.Write))
+			{
+				await model.File.CopyToAsync(stream);
+			}
+
+			if (model.IsLastChunk)
+			{
+
+			}
+
+			return Ok(tokenId + filesId);
+		}
 		[Authorize]
 		[HttpGet("getfiles/{userId:length(5)}")]
 		[ProducesResponseType(StatusCodes.Status200OK)]

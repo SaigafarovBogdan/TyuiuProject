@@ -1,8 +1,6 @@
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using ServerProject.Services;
-using System.Net.Http;
-using System.Net.Http.Headers;
 using WebProject.Services;
 
 namespace WebProject
